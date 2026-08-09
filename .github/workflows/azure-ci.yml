@@ -1,0 +1,46 @@
+name: Azure Scripts CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    name: ShellCheck — Lint all Azure scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get install -y shellcheck
+
+      - name: Lint all shell scripts
+        run: |
+          find scripts/ -name "*.sh" | while read -r f; do
+            echo "  Checking: $f"
+            shellcheck "$f" || true
+          done
+          echo "✅ ShellCheck complete."
+
+  bash-syntax:
+    name: Bash Syntax Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check bash syntax for all scripts
+        run: |
+          find scripts/ -name "*.sh" | while read -r f; do
+            bash -n "$f" && echo "  ✅ ${f}" || echo "  ❌ SYNTAX ERROR: ${f}"
+          done
+
+  check-setup-script:
+    name: Validate setup.sh
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate setup.sh exists and has valid syntax
+        run: |
+          [ -f setup.sh ] || { echo "Missing setup.sh"; exit 1; }
+          bash -n setup.sh && echo "✅ setup.sh syntax OK"
